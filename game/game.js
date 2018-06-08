@@ -1,15 +1,11 @@
 var stats;
 var controls, clock;
-var Colors = {
-    red:0xf25346,
-    white:0xd8d0d1,
-    brown:0x59332e,
-    pink:0xF5986E,
-    brownDark:0x23190f,
-    blue:0x68c3c0,
-};
+var Colors = new ColorGenerator();
+
+var rotateControl = 0;
 
 window.onload = function() {
+    // full screen control
     document.getElementById('full-btn').addEventListener('click', function() {
         if (BigScreen.enabled) {
             BigScreen.toggle();
@@ -17,6 +13,10 @@ window.onload = function() {
         else {
             alert("The browser doesn't support this function.");
         }
+    }, false);
+    // rotate control
+    document.getElementById('rotate').addEventListener('click', function() {
+        rotateControl = 0.1 - rotateControl;
     }, false);
     // start the game
     threeStart();
@@ -117,6 +117,8 @@ function animate() {
     var delta = (performance.now() - previousTime) / 1000;
     player.update(delta, previousTime);
     previousTime = performance.now();
+    // TWEEN.update();
+    // wholeMesh.rotation.y += rotateControl / 180 * Math.PI;
     requestAnimationFrame(animate);
 }
 
@@ -129,35 +131,76 @@ function initObject() {
 }
 
 var geoFactory = new GeoFactory();
+var wholeMesh;
+const r90 = 90 * Math.PI / 180;
+const trh = 1000; // translate half the edge length of the big cube
+
+var floorRotationMat = [
+    new THREE.Matrix4().makeRotationX(0),       // up
+    new THREE.Matrix4().makeRotationX(r90),     // front
+    new THREE.Matrix4().makeRotationZ(-r90),    // right
+    new THREE.Matrix4().makeRotationX(2*r90),   // down
+    new THREE.Matrix4().makeRotationX(-r90),    // back
+    new THREE.Matrix4().makeRotationZ(r90),     // left
+];
+    // [0,0,0], [1,0,0], [0,0,-1],[2*r90,0,0],[-r90,0,0], [0,0,r90]];
+var floorTranslation = [
+    new THREE.Matrix4().makeTranslation(0, 0, 0),       // up
+    new THREE.Matrix4().makeTranslation(0, -trh, trh),  // front
+    new THREE.Matrix4().makeTranslation(trh, -trh, 0),  // right
+    new THREE.Matrix4().makeTranslation(0, -trh*2, 0),  // down
+    new THREE.Matrix4().makeTranslation(0, -trh, -trh), // back
+    new THREE.Matrix4().makeTranslation(-trh, -trh, 0), // left
+];
+    //[0,0,0], [0,0,trh], [trh,0,0], [0,-trh,0], [0,0,-trh], [-trh,0,0]];
 function createFloor() {
-    // add the floor
-    var floor = geoFactory.createFloor(Colors.blue);
-    floor.rotation.x = -90 * Math.PI / 180;
-    scene.add(floor);
+    wholeMesh = new THREE.Object3D();
+    // // add the floor
+    // var geo = new THREE.CubeGeometry(2000, 2000, 2000);
+    // var material = new THREE.MeshPhongMaterial({
+    //     overdraw: true, 
+    //     color: Colors.blue,
+    //     transparent:true,
+    //     opacity:.9,
+    // });
+    // var BigCube = new THREE.Mesh(geo, material);
+    // wholeMesh.add(BigCube);
+    // var floor = geoFactory.createFloor(Colors.blue);
+    // floor.rotation.x = -90 * Math.PI / 180;
+    // scene.add(floor);
 
     // add the maps
+    FloorMap.init(); // init the floorMap with map strings
+    // create the cube geo prototype
     var geo = new THREE.CubeGeometry(cubeUnit, cubeUnit, cubeUnit);
     geo.applyMatrix(new THREE.Matrix4().makeTranslation(-1000, 0, -1000));
+    // load each surface
+    for (var i=0; i<6; ++i) {
+        // create the integrated geo
+        var floorGeometry = new THREE.Geometry();
+        // return the cube positions of each floor
+        var positions = (surface[i]).giveFloorPosition();
+        for (var j=0; j<positions.length; ++j){
+            var cube = new THREE.Mesh(geo.clone());
+            cube.position.x += positions[j][0];
+            cube.position.z += positions[j][1];
+            floorGeometry.mergeMesh(cube);
+        }
+        var material = new THREE.MeshPhongMaterial({
+            overdraw: true, 
+            color: Colors.generate(), //Colors.white,//
+            transparent:true,
+            opacity:.8,
+        });
+        var floor = new THREE.Mesh(floorGeometry, material);
+        floor.castShadow = true;
+        floor.receiveShadow = true;
     
-    var floorGeometry = new THREE.Geometry();
-    FloorMap.init();
-    var positions = (surface[current]).giveFloorPosition();
-    for (var i=0; i<positions.length; ++i){
-        var cube = new THREE.Mesh(geo.clone());
-        cube.position.x += positions[i][0];
-        cube.position.z += positions[i][1];
-        floorGeometry.mergeMesh(cube);
+        floor.applyMatrix(floorRotationMat[i]); // rotate
+        floor.applyMatrix(floorTranslation[i]); // translate
+        wholeMesh.add(floor);
     }
-    var material = new THREE.MeshPhongMaterial({
-        overdraw: true, 
-        color: Colors.pink,
-        transparent:true,
-        opacity:.8,
-    });
-    var floor = new THREE.Mesh(floorGeometry, material);
-    floor.castShadow = true;
-    floor.receiveShadow = true;
-    scene.add(floor);
+    scene.add(wholeMesh);
 }
 
 function createCharacter() {
