@@ -1,3 +1,18 @@
+const sumReducer = (accumulator, currentValue) => accumulator + currentValue;
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+const Dir = {
+    right : {x:1, y:0, z:0},
+    up : {x:0, y:1, z:0},
+    front : {x:0, y:0, z:1},
+    left : {x:-1, y:0, z:0},
+    down : {x:0, y:-1, z:0},
+    back : {x:0, y:0, z:-1},
+}
+
 class ColorGenerator {
     constructor() {
         this.red = 0xf25346;
@@ -6,7 +21,7 @@ class ColorGenerator {
         this.pink = 0xF5986E;
         this.brownDark = 0x23190f;
         this.blue = 0x68c3c0;
-        this.colorList = [this.red, this.blue, this.brown, this.pink, this.brownDark, this.white];
+        this.colorList = [this.pink, this.red, this.blue, this.brown, this.brownDark, this.white];
         this.l = this.colorList.length;
         this.index = 0;
     }

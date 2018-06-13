@@ -22,7 +22,8 @@ window.onload = function() {
     threeStart();
 }
 
-var scene,camera, fieldOfView, aspectRatio, nearPlane, farPlane, HEIGHT, WIDTH,renderer, container;
+// var fieldOfView, aspectRatio, nearPlane, farPlane,
+var scene, camera, renderer, HEIGHT, WIDTH;
 var player;
 
 function threeStart() {
@@ -36,28 +37,23 @@ function threeStart() {
 
 function createScene() {
     // init the scene
-    HEIGHT = window.innerHeight;
-    WIDTH = window.innerWidth;
+    var HEIGHT = window.innerHeight;
+    var WIDTH = window.innerWidth;
     scene = new THREE.Scene();
 
-    scene.fog = new THREE.FogExp2(0xf7d9aa, 0.0008);
+    scene.fog = new THREE.FogExp2(0xf7d9aa, 0.003);
 
     // init the camera
-    aspectRatio = WIDTH / HEIGHT;
-    fieldOfView = 60;
-    nearPlane = 1;
-    farPlane = 10000;
+    var aspectRatio = WIDTH / HEIGHT;
+    var fieldOfView = 60;
+    var nearPlane = 1;
+    var farPlane = 10000;
     camera = new THREE.PerspectiveCamera(//THREE.OrthographicCamera
             fieldOfView,
             aspectRatio,
             nearPlane,
             farPlane
     );
-    // set the position
-    camera.position.x = 0;
-    camera.position.z = 500;
-    camera.position.y = 500;
-    camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
 
     // init renderer
     renderer = new THREE.WebGLRenderer({ 
@@ -69,7 +65,7 @@ function createScene() {
     // enable the shadowMap
     renderer.shadowMap.enabled = true;
     // add the renderer
-    container = document.getElementById('world');
+    var container = document.getElementById('world');
     container.appendChild(renderer.domElement);
     
     // resize the renderer if the window size changes
@@ -78,8 +74,8 @@ function createScene() {
 
 function handleWindowResize() {
     // update the camera's parameters
-    HEIGHT = window.innerHeight;
-    WIDTH = window.innerWidth;
+    var HEIGHT = window.innerHeight;
+    var WIDTH = window.innerWidth;
     renderer.setSize(WIDTH, HEIGHT);
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
@@ -114,10 +110,10 @@ function createLights() {
 var previousTime = performance.now();
 function animate() {
     renderer.render(scene, camera);
-    var delta = (performance.now() - previousTime) / 1000;
-    player.update(delta, previousTime);
-    previousTime = performance.now();
-    // TWEEN.update();
+    // var delta = (performance.now() - previousTime) / 1000;
+    player.update();//delta, previousTime);
+    // previousTime = performance.now();
+    TWEEN.update();
     // wholeMesh.rotation.y += rotateControl / 180 * Math.PI;
     requestAnimationFrame(animate);
 }
@@ -132,79 +128,61 @@ function initObject() {
 
 var geoFactory = new GeoFactory();
 var wholeMesh;
-const r90 = 90 * Math.PI / 180;
-const trh = 1000; // translate half the edge length of the big cube
+const Radian90 = 90 * Math.PI / 180;
 
-var floorRotationMat = [
-    new THREE.Matrix4().makeRotationX(0),       // up
-    new THREE.Matrix4().makeRotationX(r90),     // front
-    new THREE.Matrix4().makeRotationZ(-r90),    // right
-    new THREE.Matrix4().makeRotationX(2*r90),   // down
-    new THREE.Matrix4().makeRotationX(-r90),    // back
-    new THREE.Matrix4().makeRotationZ(r90),     // left
-];
-    // [0,0,0], [1,0,0], [0,0,-1],[2*r90,0,0],[-r90,0,0], [0,0,r90]];
-var floorTranslation = [
-    new THREE.Matrix4().makeTranslation(0, 0, 0),       // up
-    new THREE.Matrix4().makeTranslation(0, -trh, trh),  // front
-    new THREE.Matrix4().makeTranslation(trh, -trh, 0),  // right
-    new THREE.Matrix4().makeTranslation(0, -trh*2, 0),  // down
-    new THREE.Matrix4().makeTranslation(0, -trh, -trh), // back
-    new THREE.Matrix4().makeTranslation(-trh, -trh, 0), // left
-];
-    //[0,0,0], [0,0,trh], [trh,0,0], [0,-trh,0], [0,0,-trh], [-trh,0,0]];
+// var floorRotationMat = [
+//     new THREE.Matrix4().makeRotationX(0),       // up
+//     new THREE.Matrix4().makeRotationX(r90),     // front
+//     new THREE.Matrix4().makeRotationZ(-r90),    // right
+//     new THREE.Matrix4().makeRotationX(2*r90),   // down
+//     new THREE.Matrix4().makeRotationX(-r90),    // back
+//     new THREE.Matrix4().makeRotationZ(r90),     // left
+// ];
+//     // [0,0,0], [1,0,0], [0,0,-1],[2*r90,0,0],[-r90,0,0], [0,0,r90]];
+// var floorTranslation = [
+//     new THREE.Matrix4().makeTranslation(0, 0, 0),       // up
+//     new THREE.Matrix4().makeTranslation(0, -trh, trh),  // front
+//     new THREE.Matrix4().makeTranslation(trh, -trh, 0),  // right
+//     new THREE.Matrix4().makeTranslation(0, -trh*2, 0),  // down
+//     new THREE.Matrix4().makeTranslation(0, -trh, -trh), // back
+//     new THREE.Matrix4().makeTranslation(-trh, -trh, 0), // left
+// ];
+//     //[0,0,0], [0,0,trh], [trh,0,0], [0,-trh,0], [0,0,-trh], [-trh,0,0]];
+
+
+var floorMap;
 function createFloor() {
     wholeMesh = new THREE.Object3D();
-    // // add the floor
-    // var geo = new THREE.CubeGeometry(2000, 2000, 2000);
-    // var material = new THREE.MeshPhongMaterial({
-    //     overdraw: true, 
-    //     color: Colors.blue,
-    //     transparent:true,
-    //     opacity:.9,
-    // });
-    // var BigCube = new THREE.Mesh(geo, material);
-    // wholeMesh.add(BigCube);
-    // var floor = geoFactory.createFloor(Colors.blue);
-    // floor.rotation.x = -90 * Math.PI / 180;
-    // scene.add(floor);
-
-    // add the maps
-    FloorMap.init(); // init the floorMap with map strings
-    // create the cube geo prototype
+    var floorGeometry = new THREE.Geometry();
     var geo = new THREE.CubeGeometry(cubeUnit, cubeUnit, cubeUnit);
-    geo.applyMatrix(new THREE.Matrix4().makeTranslation(-1000, 0, -1000));
-    // load each surface
-    for (var i=0; i<6; ++i) {
-        // create the integrated geo
-        var floorGeometry = new THREE.Geometry();
-        // return the cube positions of each floor
-        var positions = (surface[i]).giveFloorPosition();
-        for (var j=0; j<positions.length; ++j){
-            var cube = new THREE.Mesh(geo.clone());
-            cube.position.x += positions[j][0];
-            cube.position.z += positions[j][1];
-            floorGeometry.mergeMesh(cube);
-        }
-        var material = new THREE.MeshPhongMaterial({
-            overdraw: true, 
-            color: Colors.generate(), //Colors.white,//
-            transparent:true,
-            opacity:.8,
-        });
-        var floor = new THREE.Mesh(floorGeometry, material);
-        floor.castShadow = true;
-        floor.receiveShadow = true;
-    
-        floor.applyMatrix(floorRotationMat[i]); // rotate
-        floor.applyMatrix(floorTranslation[i]); // translate
-        wholeMesh.add(floor);
+
+    // get the floor cube positions
+    floorMap = new FloorMap(10, 0, 0, 0); // 0 -> cubes' number of each edge; (0,0,0) -> origin
+    var cubeCoords = floorMap.produceMap(5); // 10 -> random 10 paths int the cube map
+    // add the cubeGeo into mesh
+    for (var coord of cubeCoords){
+        var cube = new THREE.Mesh(geo.clone());
+        cube.position.x += coord.x;
+        cube.position.y += coord.y;
+        cube.position.z += coord.z;
+        floorGeometry.mergeMesh(cube);
     }
+
+    var material = new THREE.MeshPhongMaterial({
+        overdraw: true, 
+        color: Colors.generate(), //Colors.white,//
+        transparent:true,
+        opacity:.7,
+    });
+    var floor = new THREE.Mesh(floorGeometry, material);
+    floor.castShadow = true;
+    floor.receiveShadow = true;
+    wholeMesh.add(floor);
     scene.add(wholeMesh);
 }
 
 function createCharacter() {
     player = new Player();
-    player.mesh.position.y = 50;
-    scene.add(player.mesh);
+    scene.add(player.obj);
+    // scene.add(player.group);
 }
