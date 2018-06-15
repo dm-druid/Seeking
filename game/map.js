@@ -74,16 +74,23 @@ class FloorMap {
     }
 
     produceMap(routeNumber) {
+        var ddir = [
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+            [2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 2, 2, 2],
+            [2, 2, 2, 1, 1, 1, 0, 0, 0, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+        ];
         for (var k=0; k<routeNumber; ++k) {
-            var nd = [this.n - 1, this.n - 1, this. n - 1]; // the number for each direction
-            var dir = [];
-            var r = 3; // random parameter
-            for (var i=0; i< (this.n-1); ++i) {
-                var t = getRandomInt(r);
-                while (nd[t] <= 0) { t = getRandomInt(r); }
-                dir.push(t); dir.push(t); dir.push(t);
-                nd[t] -= 3;
-            }
+            // var nd = [this.n - 1, this.n - 1, this. n - 1]; // the number for each direction
+            // var dir = [];
+            // var r = 3; // random parameter
+            // for (var i=0; i< (this.n-1); ++i) {
+            //     var t = getRandomInt(r);
+            //     while (nd[t] <= 0) { t = getRandomInt(r); }
+            //     dir.push(t); dir.push(t); dir.push(t);
+            //     nd[t] -= 3;
+            // }
+            // console.log(dir);
+            var dir = ddir[k];
             // transfer the dir into cube coordinates
             var x = 0, y = 0, z = 0;
             for (var d of dir) {
@@ -116,10 +123,10 @@ class FloorMap {
     }
 
     getBirthPlace() {
-        var cubeId = getRandomInt(this.points.length);
-        while (this.checkByCoor(this.points[cubeId], Dir.up)) { cubeId = getRandomInt(this.points.length); }
-        var p = this.points[cubeId];
-        // var aboveCube = {x:p.x, y:p.y + this.cubeUnit, z:p.z};
+        // var cubeId = getRandomInt(this.points.length);
+        // while (this.checkByCoor(this.points[cubeId], Dir.up)) { cubeId = getRandomInt(this.points.length); }
+        // var p = this.points[cubeId];
+        var p = this.pos2Coor(2, 3, 0);
         return p;
     }
 }
