@@ -2,15 +2,17 @@ var RotateI = {t: 0};
 var PreI = {t: 0};
 var RotateAxis;
 var RotateRadian;
+var initPos;
 
 class Player {
     // create the object
     constructor() {
         var obj = new THREE.Object3D();
         // create the body
-        var geom = new THREE.BoxGeometry(50,50,50);
+        var geom = new THREE.BoxGeometry(50,50,50);//THREE.SphereGeometry( 25, 100, 100 ); //
+        this.color = Colors.red;
         var mat = new THREE.MeshPhongMaterial({
-            color: Colors.red, 
+            color: this.color, 
             shading: THREE.FlatShading,
             // transparent: true,
             // opacity: 0.7,
@@ -39,8 +41,11 @@ class Player {
         this.cube = floorMap.coor2Pos(p); // record which cube that the player is attached on
         p.y += cubeUnit;
         obj.applyMatrix(new THREE.Matrix4().makeTranslation(p.x, p.y, p.z));
-        
+        initPos = obj.position.clone();
+
         this.obj = obj;
+
+        this.treasure = [];
 
         // define the parameters
         this.velocity = 1;
@@ -61,7 +66,6 @@ class Player {
                     })
                     .onComplete(function() { 
                         Dir = player.produceDir(); 
-                        console.log(Dir); 
                         isMoving = false; })
                     .to( {t: 1}, 500)
                     .easing(TWEEN.Easing.Back.Out);
@@ -79,7 +83,7 @@ class Player {
                     .to( {t: 1}, 500 )
                     .easing(TWEEN.Easing.Back.Out);
         this.chainTween2 = new TWEEN.Tween(this.obj.position)
-                    .onComplete(function() { Dir = player.produceDir(); console.log(Dir); isMoving = false; })
+                    .onComplete(function() { Dir = player.produceDir(); isMoving = false; })
                     .easing(TWEEN.Easing.Quadratic.Out);
         this.chainTween.chain(this.chainTween1, this.chainTween2);
     }
@@ -124,7 +128,6 @@ class Player {
     }
 
     update() {
-        // console.log(delta);
         if (isMoving) { return; }
         // check it!!!
         var x = this.obj.position.x, y = this.obj.position.y, z = this.obj.position.z;
@@ -136,7 +139,6 @@ class Player {
         if (moveUp) { 
             dir = Dir.back;
             if (floorMap.checkByPos(locatePos, dir)) {
-                console.log('rotate 90');
                 rotate = true;
                 // change the data of cube position
                 this.cube = floorMap.movePos(this.cube, Dir.back);
@@ -153,7 +155,6 @@ class Player {
                 move = {x: x + dir.x * cubeUnit, y: y + dir.y * cubeUnit, z : z + dir.z * cubeUnit}; // backward
             }
             else {
-                console.log('rotate 270');
                 chain = true;
                 var d = Dir.rDownBack;
                 RotateAxis = new THREE.Vector3(Math.abs(d.x), Math.abs(d.y), Math.abs(d.z));
@@ -164,7 +165,6 @@ class Player {
         if (moveDown) {
             dir = Dir.front;
             if (floorMap.checkByPos(locatePos, dir)) {
-                console.log('rotate 90');
                 rotate = true;
                 this.cube = floorMap.movePos(this.cube, Dir.front);
                 this.cube = floorMap.movePos(this.cube, Dir.up);
@@ -180,9 +180,7 @@ class Player {
                 move = {x: x + dir.x * cubeUnit, y: y + dir.y * cubeUnit, z : z + dir.z * cubeUnit}; // forward
             }
             else {
-                console.log('rotate 270');
                 chain = true;
-
                 var d = Dir.rDownFront;
                 RotateAxis = new THREE.Vector3(Math.abs(d.x), Math.abs(d.y), Math.abs(d.z));
                 RotateRadian =  (d.x + d.y + d.z) * Math.PI / 2;
@@ -192,7 +190,6 @@ class Player {
         if (moveLeft) {
             dir = Dir.left;
             if (floorMap.checkByPos(locatePos, dir)) {
-                console.log('rotate 90');
                 rotate = true;
                 this.cube = floorMap.movePos(this.cube, dir);
                 this.cube = floorMap.movePos(this.cube, Dir.up);
@@ -208,7 +205,6 @@ class Player {
                 move = {x: x + dir.x * cubeUnit, y: y + dir.y * cubeUnit, z : z + dir.z * cubeUnit};  // left
             }
             else {
-                console.log('rotate 270');
                 chain = true;
                 var d = Dir.rDownLeft;
                 RotateAxis = new THREE.Vector3(Math.abs(d.x), Math.abs(d.y), Math.abs(d.z));
@@ -219,7 +215,7 @@ class Player {
         if (moveRight) {
             dir = Dir.right;
             if (floorMap.checkByPos(locatePos, dir)) {
-                console.log('rotate 90');
+                
                 rotate = true;
                 this.cube = floorMap.movePos(this.cube, dir);
                 this.cube = floorMap.movePos(this.cube, Dir.up);
@@ -235,7 +231,7 @@ class Player {
                 move = {x: x + dir.x * cubeUnit, y: y + dir.y * cubeUnit, z : z + dir.z * cubeUnit};  // right
             }
             else {
-                console.log('rotate 270');
+                
                 chain = true;
                 var d = Dir.rDownRight;
                 RotateAxis = new THREE.Vector3(Math.abs(d.x), Math.abs(d.y), Math.abs(d.z));
@@ -244,17 +240,19 @@ class Player {
             }
         }
         if (move) {
+            console.log('rotate 90');
             console.log(this.cube);
-            // var coor = floorMap.pos2Coor(this.cube.i, this.cube.j, this.cube.k);
-            // this.light.position.set(coor.x, coor.y, coor.z);
+            paintCube();
             this.tween.to(move, 500);
             this.tween.start();
         }
         if (rotate) {
-            this.rotateTween.start();
             console.log(this.cube);
+            paintCube();
+            this.rotateTween.start();
         }
         if (chain) {
+            console.log('rotate 270');
             var t = {x: x + dir.x * cubeUnit, y: y + dir.y * cubeUnit, z : z + dir.z * cubeUnit}; 
             this.chainTween.to(t, 500);
             var dir = Dir.down;
@@ -264,30 +262,6 @@ class Player {
             this.chainTween.start();
         }
     }
-
-    skill() {
-        var color = Colors.pink;
-        var cube = GeoFactory.getCube(color);
-        var x = this.mesh.position.x, z = this.mesh.position.z;
-        var j = Math.round((x + 1000) / 50), i = Math.round((z + 1000) / 50);
-        var di, dj;
-        switch (this.dir) {
-            case 'up':
-                di = -1; dj = 0; break;
-            case 'down':
-                di = 1; dj = 0; break;
-            case 'left':
-                di = 0; dj = -1; break;
-            case 'right':
-                di = 0; dj = 1; break;
-        }
-        for (var i=0; i<this.power; ++i) {
-            var cube = getCube(Color.pink);
-            cube.mesh.position.set()
-            scene.add();
-        }
-
-    }
 };
 
 
@@ -296,7 +270,6 @@ var moveUp = false;
 var moveLeft = false;
 var moveRight = false;
 var isMoving = false;
-var skillCD = true;
 
 var onKeyDown = function ( event ) {
     switch ( event.keyCode ) {
@@ -320,11 +293,6 @@ var onKeyDown = function ( event ) {
             moveRight = true;
             player.dir = "right";
             break;
-        case 32: // space
-            if ( skillCD === true ) {
-                // player.skill();
-            }
-            break;
     }
 };
 var onKeyUp = function ( event ) {
@@ -347,5 +315,3 @@ var onKeyUp = function ( event ) {
             break;
     }
 };
-document.addEventListener( 'keydown', onKeyDown, false );
-document.addEventListener( 'keyup', onKeyUp, false );

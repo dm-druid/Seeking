@@ -3,6 +3,9 @@ var controls, clock;
 var Colors = new ColorGenerator();
 
 var rotateControl = 0;
+var startFlag = false;
+var routeNumber = 5;
+
 
 window.onload = function() {
     // full screen control
@@ -14,15 +17,97 @@ window.onload = function() {
             alert("The browser doesn't support this function.");
         }
     }, false);
-    // rotate control
-    document.getElementById('rotate').addEventListener('click', testFunc, false);
-    // start the game
+
+    document.getElementById('start-button').addEventListener('click', startGame ,false);
     threeStart();
 }
-
+// var cone;
+var onePiece;
 function testFunc() {
+    var triangles = 100;
+    var geometry = new THREE.BufferGeometry();
+    var positions = [];
+    var normals = [];
+    var colors = [];
+    var color = new THREE.Color();
+
+    var n = 50, n2 = n / 2;	// triangles spread in the cube
+    var d = 10, d2 = d / 2;	// individual triangle size
+    var pA = new THREE.Vector3();
+    var pB = new THREE.Vector3();
+    var pC = new THREE.Vector3();
+    var cb = new THREE.Vector3();
+    var ab = new THREE.Vector3();
+                
+    for ( var i = 0; i < triangles; i ++ ) {
+        // positions
+        var x = Math.random() * n - n2;
+        var y = Math.random() * n - n2;
+        var z = Math.random() * n - n2;
+        var ax = x + Math.random() * d - d2;
+        var ay = y + Math.random() * d - d2;
+        var az = z + Math.random() * d - d2;
+        var bx = x + Math.random() * d - d2;
+        var by = y + Math.random() * d - d2;
+        var bz = z + Math.random() * d - d2;
+        var cx = x + Math.random() * d - d2;
+        var cy = y + Math.random() * d - d2;
+        var cz = z + Math.random() * d - d2;
+        positions.push( ax, ay, az );
+        positions.push( bx, by, bz );
+        positions.push( cx, cy, cz );
+        // flat face normals
+        pA.set( ax, ay, az );
+        pB.set( bx, by, bz );
+        pC.set( cx, cy, cz );
+        cb.subVectors( pC, pB );
+        ab.subVectors( pA, pB );
+        cb.cross( ab );
+        cb.normalize();
+        var nx = cb.x;
+        var ny = cb.y;
+        var nz = cb.z;
+        normals.push( nx, ny, nz );
+        normals.push( nx, ny, nz );
+        normals.push( nx, ny, nz );
+        // colors
+        var vx = 0;//( x / n ) + 0;
+        var vy = 0;//( y / n ) + 0;
+        var vz = ( z / n ) + 0.5;
+        color.setRGB( vx, vy, vz );
+        colors.push( color.r, color.g, color.b );
+        colors.push( color.r, color.g, color.b );
+        colors.push( color.r, color.g, color.b );
+    }
+    function disposeArray() { this.array = null; }
+    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ).onUpload( disposeArray ) );
+    geometry.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ).onUpload( disposeArray ) );
+    geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ).onUpload( disposeArray ) );
+    geometry.computeBoundingSphere();
+                
+    var material = new THREE.MeshPhongMaterial( {
+        color: 0xaaaaaa, specular: 0xffffff, shininess: 250,
+        side: THREE.DoubleSide, vertexColors: THREE.VertexColors
+    } );
+    mesh = new THREE.Mesh( geometry, material );
+    var p = floorMap.getBirthPlace();
+    mesh.position.set(p.x, p.y + 50, p.z);
+    scene.add( mesh );
+    onePiece = mesh;
+}
+
+function testColor() {
     //change the color
-    // player.obj.children[0].material
+    // var playerColor = player.obj.children[1].material.color;
+    var cube = floorMap.getInstanceByPos(player.cube);
+    var playerColor = cube.material.color;
+    console.log(playerColor);
+    console.log(cube);
+    var value = new THREE.Color(Colors.generate());
+    var tween = new TWEEN.Tween(playerColor)
+            .to(value, 500)
+            .easing(TWEEN.Easing.Quartic.In)
+            .start();
 }
 
 // var fieldOfView, aspectRatio, nearPlane, farPlane,
@@ -114,10 +199,25 @@ function createLights() {
 function animate() {
     renderer.render(scene, camera);
     // var delta = (performance.now() - previousTime) / 1000;
-    player.update();//delta, previousTime);
-    // previousTime = performance.now();
+    if (startFlag) {
+        if (!lose) {
+            player.update();
+        }
+        for (var m of monsters) {
+            m.update();
+        }
+        for (var o of onePieces) {
+            o.update();
+        }
+        winGate.update();
+    }
+    else {
+        // console.log(player.obj.rotation);
+        // player.obj.position = {x: 500, y:5000, z:600};
+        player.obj.rotation.y += 0.01;
+        // player.obj.rotation.x += 0.005;
+    }
     TWEEN.update();
-    // wholeMesh.rotation.y += rotateControl / 180 * Math.PI;
     requestAnimationFrame(animate);
 }
 
@@ -127,41 +227,47 @@ var Dir;
 function initObject() {
     createFloor();
     createCharacter();
+    paintCube();
     createMonsters();
+    createOnePieces();
+    createWinGate();
 }
 
-var wholeMesh;
+// var wholeMesh;
 var floorMap;
 
 function createFloor() {
-    Dir = DirUp;
-    wholeMesh = new THREE.Object3D();
-    var floorGeometry = new THREE.Geometry();
-    var geo = new THREE.CubeGeometry(cubeUnit, cubeUnit, cubeUnit);
-
-    // get the floor cube positions
-    floorMap = new FloorMap(10, 0, 0, 0); // 0 -> cubes' number of each edge; (0,0,0) -> origin
-    var cubeCoords = floorMap.produceMap(3); // 10 -> random 10 paths int the cube map
-    // add the cubeGeo into mesh
-    for (var coord of cubeCoords){
-        var cube = new THREE.Mesh(geo.clone());
-        cube.position.x += coord.x;
-        cube.position.y += coord.y;
-        cube.position.z += coord.z;
-        floorGeometry.mergeMesh(cube);
-    }
-
-    var material = new THREE.MeshPhongMaterial({
+    Dir = DirNormal;
+    // wholeMesh = new THREE.Object3D();
+    var floorGroup = new THREE.Object3D();
+    // var floorGeometry = new THREE.Geometry();
+    var geo = new THREE.BoxBufferGeometry(cubeUnit, cubeUnit, cubeUnit);//CubeGeometry(cubeUnit, cubeUnit, cubeUnit);
+    var mat = new THREE.MeshPhongMaterial({
         overdraw: true, 
-        color: Colors.generate(), //Colors.white,//
+        color: Colors.pink, //Colors.white,//
         transparent:true,
         opacity:.9,
     });
-    var floor = new THREE.Mesh(floorGeometry, material);
-    floor.castShadow = true;
-    floor.receiveShadow = true;
-    wholeMesh.add(floor);
-    scene.add(wholeMesh);
+
+    // get the floor cube positions
+    floorMap = new FloorMap(10, 0, 0, 0); // 0 -> cubes' number of each edge; (0,0,0) -> origin
+    var cubeCoords = floorMap.produceMap(routeNumber); // 10 -> random 10 paths int the cube map
+    // add the cubeGeo into mesh
+    for (var coord of cubeCoords){
+        var cube = new THREE.Mesh(geo.clone(), mat.clone());
+        cube.position.x += coord.x;
+        cube.position.y += coord.y;
+        cube.position.z += coord.z;
+        // floorGeometry.mergeMesh(cube);
+        cube.castShadow = false;
+        cube.receiveShadow = false;
+        floorGroup.add(cube);
+        floorMap.assignInstanceByCoor(coord, cube);
+    }
+
+    // var floor = new THREE.Mesh(floorGeometry, material);
+    
+    scene.add(floorGroup);
 }
 
 function createCharacter() {
@@ -170,6 +276,26 @@ function createCharacter() {
     scene.add(player.obj);
 }
 
+var monsters = []
 function createMonsters() {
-    
+    // console.log(player.obj.position);
+    for (var i=0; i < 3 * routeNumber; ++i) {
+        var monster = new Monster();
+        monsters.push(monster);
+        scene.add(monster.obj);
+    }
+}
+
+var onePieces = []
+function createOnePieces() {
+    for (var i=1; i <= routeNumber; ++i) {
+        var onePiece = new OnePiece(i);
+        onePieces.push(onePiece);
+        scene.add(onePiece.obj);
+    }
+}
+var winGate;
+function createWinGate() {
+    winGate = new WinGate();
+    scene.add(winGate.obj);
 }

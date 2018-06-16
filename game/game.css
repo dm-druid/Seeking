@@ -22,9 +22,73 @@ div#world {
 }
 
 
-#rotate {
+/* #rotate {
     position: absolute;
     right: 50px;
     bottom: 20px;
     height: 20px;
+} */
+
+#start-button {
+    visibility: visible;
+    position: absolute;
+    right: 50%;
+    bottom: 20%;
+    transform: translate(50%, 50%);
+    width: 170px;
+    height: 50px;
+    line-height: 50px;
+    margin: 3em auto;
+    text-align: center;
+    color: #FFF;
+    font-size: 14px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 50em;
+    background: #f25346;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.07);
+}
+
+.pop-up {
+    visibility: hidden;
+    position: absolute;
+    right: 50%;
+    bottom: 70%;
+    transform: translate(50%, 50%);
+    width: 170px;
+    height: 50px;
+    line-height: 50px;
+    margin: 3em auto;
+    text-align: center;
+    color: #FFF;
+    font-size: 14px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 50em;
+    background: #35a785;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.07);
+}
+
+.pop-up .restart:hover {
+    cursor: pointer;
+}
+
+#number {
+    position: absolute;
+    right: 7%;
+    bottom: 90%;
+    font-size: 20px;
+    text-align: center;
+    color: lightslategrey;
+}
+
+#target-number {
+    position: absolute;
+    right: 5%;
+    bottom: 90%;
+    font-size: 20px;
+    text-align: center;
+    color: lightslategrey;
 }

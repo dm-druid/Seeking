@@ -13,9 +13,31 @@
     <script src="util.js"></script>
     <script src="map.js"></script>
     <script src="player.js"></script>
+    <script src="monster.js"></script>
+    <script src="onePiece.js"></script>
+    <script src="winGate.js"></script>
     <script src="game.js"></script>
+    <script src="gameScene.js"></script>
     <div id="world"></div>
-    <button id="rotate">test</button>
+    <div id="start-button">
+        <div>Start</div>
+    </div>
+    <div class="pop-up" id='lose'>
+        <div>You lose.</div>
+        <div class='restart'>Restart?</div>
+    </div>
+    <div class="pop-up" id='win'>
+        <div>You win!</div>
+        <div class='restart'>Restart?</div>
+    </div>
+    <div id='number'>
+        <!-- score: 1 -->
+    </div>
+    <div id='target-number'>
+        <!-- / 5 -->
+    </div>
+   
+    <!-- <button id="rotate">Test func</button> -->
     <button id="full-btn"></button>
 </body>
 </html>
